@@ -2,27 +2,26 @@ package ECTE331_Project_Part3;
 
 public class MainDriver {
 
+    private static final int CEILING_PRIORITY = Thread.MAX_PRIORITY; // 10
+
     public static void main(String[] args) throws InterruptedException {
-        MotorController motor = new MotorController();
+        MotorController motor = new MotorController(CEILING_PRIORITY);
 
         Log logger = new Log(motor);
         MotionPlanner motion = new MotionPlanner();
         SafetyMonitoring safety = new SafetyMonitoring(motor);
 
-        System.out.println("=== Priority Inversion Demonstration ===");
+        System.out.println("=== Priority Ceiling Demonstration ===");
+        System.out.println("Ceiling priority = " + CEILING_PRIORITY);
         System.out.println("Priorities -> Safety(HIGH)=" + safety.getPriority()
                 + " Motion(MEDIUM)=" + motion.getPriority()
                 + " Logger(LOW)=" + logger.getPriority());
         System.out.println("==================================================");
 
-        // Step 1: Logger starts first and grabs the motor immediately
         logger.start();
-        Thread.sleep(100); // head start so Logger acquires the lock first
+        Thread.sleep(100); // head start so Logger enters the section first
 
-        // Step 2: MotionPlanner starts, competing for CPU (not for the motor)
         motion.start();
-
-        // Step 3: SafetyMonitor starts, will block waiting for the motor
         safety.start();
 
         logger.join();
