@@ -10,7 +10,8 @@ public class MotorController {
      */
     public synchronized void moveMotorBusyWork(String threadName, long workTimeMs) {
         long enterTime = System.currentTimeMillis();
-        System.out.println("[" + enterTime + "] " + threadName + " ACQUIRED motor (will busy-work for " + workTimeMs + " ms)");
+        System.out.println("[" + enterTime + "] " + threadName + " ACQUIRED motor (will busy-work for "
+                + workTimeMs + " ms)");
 
         long start = System.currentTimeMillis();
         long dummy = 0;
@@ -20,7 +21,8 @@ public class MotorController {
         }
 
         long exitTime = System.currentTimeMillis();
-        System.out.println("[" + exitTime + "] " + threadName + " RELEASED motor " + "(actual hold time = " + (exitTime - enterTime) + " ms)");
+        System.out.println("[" + exitTime + "] " + threadName + " RELEASED motor "
+                + "(actual hold time = " + (exitTime - enterTime) + " ms)");
     }
 
     /**
