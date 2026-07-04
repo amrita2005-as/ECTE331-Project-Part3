@@ -2,6 +2,12 @@ package ECTE331_Project_Part3;
 
 public class MotorController {
 
+    /**
+     * Called by Logger (LOW). Does a FIXED AMOUNT OF WORK (iterations),
+     * not a fixed amount of TIME. This is critical: if the loop exited on
+     * elapsed wall-clock time, it would always finish at ~the same moment
+     * regardless of CPU contention.
+     */
     public synchronized void moveMotorBusyWork(String threadName, long iterations) {
         long enterTime = System.currentTimeMillis();
         System.out.println("[" + enterTime + "] " + threadName + " ACQUIRED motor (will do "
@@ -9,7 +15,7 @@ public class MotorController {
 
         long dummy = 0;
         for (long i = 0; i < iterations; i++) {
-            dummy += (i % 7);
+            dummy += (i % 7); // meaningless work; prevents JIT from eliminating the loop
         }
 
         long exitTime = System.currentTimeMillis();
