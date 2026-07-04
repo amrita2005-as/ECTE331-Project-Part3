@@ -1,34 +1,35 @@
 package ECTE331_Project_Part3;
-
 /**
- * MotionPlanner - MEDIUM priority.
- * Sends movement commands to the motor.
+ * MotionPlannerThread (MEDIUM priority) - Task 3.
+ * Deliberately runs continuous CPU-bound work (does NOT need the motor)
+ * to preempt Logger and delay its release of the resource.
+ * This is the mechanism that causes priority inversion.
  */
 public class MotionPlanner extends Thread {
 
-    private final MotorController motor;
-    private final int cycles;
+    private volatile boolean keepRunning = true;
 
-    public MotionPlanner(MotorController motor, int cycles) {
-        this.motor = motor;
-        this.cycles = cycles;
+    public MotionPlanner() {
         this.setName("MotionPlanner");
         this.setPriority(Thread.NORM_PRIORITY); // priority 5
     }
 
+    public void stopRunning() {
+        keepRunning = false;
+    }
+
     @Override
     public void run() {
-        for (int i = 1; i <= cycles; i++) {
-            System.out.println(getName() + " (MEDIUM) planning movement... [cycle " + i + "]");
-
-            motor.moveMotor(getName() + " (MEDIUM)", 700);
-
+        long dummy = 0;
+        while (keepRunning) {
+            dummy += 1; // CPU-bound busy work, no motor access needed
+            System.out.println(getName() + " (MEDIUM) running...");
             try {
-                Thread.sleep(200);
+                Thread.sleep(200); // small pause just so console isn't flooded
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         }
-        System.out.println(getName() + " (MEDIUM) finished all cycles.");
+        System.out.println(getName() + " (MEDIUM) stopped");
     }
-}
+} 
