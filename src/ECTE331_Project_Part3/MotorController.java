@@ -1,29 +1,63 @@
 package ECTE331_Project_Part3;
 
 public class MotorController {
-	//Thread that is currently holding the motor
-	private Thread holder = null;
 
-    // Critical section: only one thread can access at a time
-    public synchronized void useMotor(String threadName) {
-    	holder = Thread.currentThread();
-    	// Log entry time and thread access
+    private Thread owner = null;
+
+    // remaining "work units"
+    private int remainingWork = 300;
+
+    private boolean inherited = false;
+
+    public synchronized void acquire(String name) {
+
+        owner = Thread.currentThread();
+
         System.out.println("[" + System.currentTimeMillis() + "] "
-                + threadName + " acquired motor");
+                + name + " acquired motor");
 
-        try {
-            // Simulate long motor operation (creates inversion window)
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        while (remainingWork > 0) {
+
+            // simulate faster execution if inheritance is active
+            int step = inherited ? 5 : 1;
+
+            remainingWork -= step;
+
+            try {
+                Thread.sleep(10); // small delay to simulate execution
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
-        // Log release time
         System.out.println("[" + System.currentTimeMillis() + "] "
-                + threadName + " released motor");
-        holder = null;
+                + name + " released motor");
+
+        owner = null;
+        remainingWork = 300;
+        inherited = false;
     }
+
+    // priority inheritance simulation
+    public synchronized void applyPriorityInheritance(Thread requester) {
+
+        if (owner != null &&
+            owner.getPriority() < requester.getPriority()) {
+
+            System.out.println("\n*** PRIORITY INHERITANCE ACTIVATED ***");
+            System.out.println(owner.getName()
+                    + " inherits priority from "
+                    + requester.getName());
+
+            owner.setPriority(requester.getPriority());
+
+            inherited = true;
+
+            System.out.println();
+        }
+    }
+
     public Thread getOwner() {
-    	return holder;
+        return owner;
     }
 }

@@ -7,22 +7,24 @@ public class SafetyMonitoring extends Thread {
     public SafetyMonitoring(MotorController motor) {
         this.motor = motor;
         setName("Safety Monitor (HIGH)");
-        setPriority(MAX_PRIORITY); // highest priority
+        setPriority(MAX_PRIORITY);
     }
 
     @Override
     public void run() {
 
-        long start = System.currentTimeMillis(); // start waiting time
+        long start = System.currentTimeMillis();
 
-        System.out.println("Safety Monitor waiting for motor...");
-        
-        motor.useMotor(getName()); // blocked if low-priority holds lock
+        System.out.println(getName() + " waiting for motor...");
 
-        long end = System.currentTimeMillis(); // end waiting time
+        // trigger inheritance check
+        motor.applyPriorityInheritance(this);
 
-        // Measure delay caused by inversion
-        System.out.println("Safety Monitor finished");
+        motor.acquire(getName());
+
+        long end = System.currentTimeMillis();
+
+        System.out.println(getName() + " finished");
         System.out.println("WAIT TIME = " + (end - start) + " ms");
     }
 }

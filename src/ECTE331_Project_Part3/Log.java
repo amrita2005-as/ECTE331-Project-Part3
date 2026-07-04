@@ -7,20 +7,16 @@ public class Log extends Thread {
     public Log(MotorController motor) {
         this.motor = motor;
         setName("Logger (LOW)");
-        setPriority(MIN_PRIORITY); // lowest priority
+        setPriority(MIN_PRIORITY);
     }
 
     @Override
     public void run() {
 
-        try {
-            Thread.sleep(200); // ensure other threads are ready
-        } catch (Exception e) {}
+        System.out.println(getName() + " trying to acquire motor");
 
-        System.out.println("Logger attempting to acquire motor");
+        motor.acquire(getName());
 
-        motor.useMotor(getName());
-
-        System.out.println("Logger completed");
+        System.out.println(getName() + " finished");
     }
 }

@@ -4,20 +4,20 @@ public class MotionPlanner extends Thread {
 
     public MotionPlanner() {
         setName("Motion Planner (MEDIUM)");
-        setPriority(NORM_PRIORITY); // medium priority
+        setPriority(NORM_PRIORITY);
     }
 
     @Override
     public void run() {
 
-        // Simulates continuous system activity causing CPU interference
         while (true) {
-            System.out.println("Motion Planner running...");
+
+            System.out.println(getName() + " running...");
+
             try {
-                Thread.sleep(300);
+                Thread.sleep(200);
             } catch (Exception e) {}
+
         }
     }
 }
-
-

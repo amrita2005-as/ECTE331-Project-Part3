@@ -10,14 +10,12 @@ public class MainDriver {
         SafetyMonitoring safety = new SafetyMonitoring(motor);
         MotionPlanner motion = new MotionPlanner();
 
-        // Force priority inversion scenario
+        // FORCE inversion
         logger.start();
 
-        try {
-            Thread.sleep(100); // ensure logger acquires first
-        } catch (Exception e) {}
+        try { Thread.sleep(100); } catch (Exception e) {}
 
-        safety.start(); // high priority arrives and blocks
-        motion.start(); // medium keeps running (interference)
+        safety.start();
+        motion.start();
     }
 }
