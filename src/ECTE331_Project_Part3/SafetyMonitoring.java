@@ -1,17 +1,25 @@
 package ECTE331_Project_Part3;
 
 /**
- * SafetyMonitorThread (HIGH priority) - Task 3.
- * Requests the motor AFTER Logger already holds it, then measures
- * how long it is blocked waiting -> this is the inversion delay.
+ * SafetyMonitoring (HIGH priority) - Task 4: Priority Inheritance.
+ *
+ * Since Java has no native priority inheritance, we SIMULATE it:
+ * before requesting the motor, SafetyMonitoring directly boosts the
+ * priority of the thread it knows is holding the resource (Log) up
+ * to its own (HIGH) priority. This stops MotionPlanner (MEDIUM) from
+ * preempting Log, so Log finishes its critical section faster.
+ * Once SafetyMonitoring acquires the motor, it restores Log's original
+ * priority.
  */
 public class SafetyMonitoring extends Thread {
 
     private final MotorController motor;
-    public long waitTime = -1; // exposed so MainDriver/PerformanceEvaluator can read it
+    private final Log logger; // reference to the thread holding the resource
+    public long waitTime = -1;
 
-    public SafetyMonitoring(MotorController motor) {
+    public SafetyMonitoring(MotorController motor, Log logger) {
         this.motor = motor;
+        this.logger = logger;
         this.setName("SafetyMonitor");
         this.setPriority(Thread.MAX_PRIORITY); // priority 10
     }
@@ -19,9 +27,23 @@ public class SafetyMonitoring extends Thread {
     @Override
     public void run() {
         System.out.println(getName() + " (HIGH) waiting for motor...");
-        long requestTime = System.currentTimeMillis();
 
+        // --- PRIORITY INHERITANCE SIMULATION ---
+        int originalLoggerPriority = logger.getPriority();
+        System.out.println(">>> INHERITANCE APPLIED: " + logger.getName()
+                + " priority boosted from " + originalLoggerPriority
+                + " to " + this.getPriority() + " <<<");
+        logger.setPriority(this.getPriority());
+        // -----------------------------------------
+
+        long requestTime = System.currentTimeMillis();
         waitTime = motor.moveMotorQuick(getName() + " (HIGH)", 300, requestTime);
+
+        // --- RESTORE Logger's original priority now that it no longer holds the lock ---
+        logger.setPriority(originalLoggerPriority);
+        System.out.println(">>> INHERITANCE RELEASED: " + logger.getName()
+                + " priority restored to " + originalLoggerPriority + " <<<");
+        // ----------------------------------------------------------------------------
 
         System.out.println(getName() + " (HIGH) finished");
         System.out.println(">>> WAIT TIME = " + waitTime + " ms <<<");
