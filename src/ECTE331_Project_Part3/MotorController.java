@@ -1,5 +1,13 @@
 package ECTE331_Project_Part3;
 
+/**
+ * Unified MotorController for Task 6.
+ * The ceiling boost is ONLY applied when mode == CEILING.
+ * For BASELINE and INHERITANCE, this class does nothing extra -
+ * inheritance's boosting is handled by SafetyMonitorThread instead,
+ * since inheritance is about one thread reacting to another,
+ * not a property of the resource itself.
+ */
 public class MotorController {
 
     private final int ceilingPriority;
@@ -8,30 +16,27 @@ public class MotorController {
         this.ceilingPriority = ceilingPriority;
     }
 
-    private void applyCeiling(Thread caller, String label, int originalPriority) {
-        System.out.println("*** PRIORITY CEILING APPLIED ***");
-        System.out.println(label + " priority boosted from " + originalPriority
-                + " to CEILING (" + ceilingPriority + ")");
-        caller.setPriority(ceilingPriority);
-    }
-
-    private void restoreOriginal(Thread caller, String label, int originalPriority) {
-        caller.setPriority(originalPriority);
-        System.out.println(label + " priority restored to " + originalPriority);
-    }
-
     /**
-     * Used by Log (LOW). Fixed amount of WORK, not fixed TIME - same
-     * reasoning as Task 3/4: this is what allows contention to actually
-     * show up as a longer wall-clock hold time.
+     * Used by Logger (LOW). Fixed amount of WORK (not time), so contention
+     * shows up as a longer wall-clock hold time.
      */
-    public synchronized long enterMotorBusyWork(Thread caller, String label, long iterations, long requestTime) {
+    public synchronized void enterBusyWork(Thread caller, String label, long iterations,
+                                            long requestTime, Mode mode, boolean verbose) {
         int originalPriority = caller.getPriority();
-        applyCeiling(caller, label, originalPriority);
+
+        if (mode == Mode.CEILING) {
+            if (verbose) {
+                System.out.println("*** PRIORITY CEILING APPLIED *** " + label
+                        + " boosted from " + originalPriority + " to " + ceilingPriority);
+            }
+            caller.setPriority(ceilingPriority);
+        }
 
         long enterTime = System.currentTimeMillis();
-        long waited = enterTime - requestTime;
-        System.out.println("[" + enterTime + "] " + label + " ENTERED motor section (waited " + waited + " ms)");
+        if (verbose) {
+            System.out.println("[" + enterTime + "] " + label + " ACQUIRED motor (waited "
+                    + (enterTime - requestTime) + " ms)");
+        }
 
         long dummy = 0;
         for (long i = 0; i < iterations; i++) {
@@ -39,23 +44,40 @@ public class MotorController {
         }
 
         long exitTime = System.currentTimeMillis();
-        System.out.println("[" + exitTime + "] " + label + " EXITING motor section "
-                + "(actual hold time = " + (exitTime - enterTime) + " ms) [checksum=" + dummy + "]");
+        if (verbose) {
+            System.out.println("[" + exitTime + "] " + label + " RELEASED motor (hold time = "
+                    + (exitTime - enterTime) + " ms) [checksum=" + dummy + "]");
+        }
 
-        restoreOriginal(caller, label, originalPriority);
-        return waited;
+        if (mode == Mode.CEILING) {
+            caller.setPriority(originalPriority);
+            if (verbose) {
+                System.out.println(label + " priority restored to " + originalPriority);
+            }
+        }
     }
 
     /**
-     * Used by SafetyMonitoring (HIGH). Short, simple critical section.
+     * Used by SafetyMonitor (HIGH). Short, simple critical section.
+     * @return the wait time (requestTime -> lock acquired)
      */
-    public synchronized long enterMotorQuick(Thread caller, String label, long workTimeMs, long requestTime) {
+    public synchronized long enterQuick(Thread caller, String label, long workTimeMs,
+                                         long requestTime, Mode mode, boolean verbose) {
         int originalPriority = caller.getPriority();
-        applyCeiling(caller, label, originalPriority);
+
+        if (mode == Mode.CEILING) {
+            if (verbose) {
+                System.out.println("*** PRIORITY CEILING APPLIED *** " + label
+                        + " boosted from " + originalPriority + " to " + ceilingPriority);
+            }
+            caller.setPriority(ceilingPriority);
+        }
 
         long enterTime = System.currentTimeMillis();
         long waited = enterTime - requestTime;
-        System.out.println("[" + enterTime + "] " + label + " ENTERED motor section (waited " + waited + " ms)");
+        if (verbose) {
+            System.out.println("[" + enterTime + "] " + label + " ACQUIRED motor (waited " + waited + " ms)");
+        }
 
         try {
             Thread.sleep(workTimeMs);
@@ -64,9 +86,17 @@ public class MotorController {
         }
 
         long exitTime = System.currentTimeMillis();
-        System.out.println("[" + exitTime + "] " + label + " EXITING motor section");
+        if (verbose) {
+            System.out.println("[" + exitTime + "] " + label + " RELEASED motor");
+        }
 
-        restoreOriginal(caller, label, originalPriority);
+        if (mode == Mode.CEILING) {
+            caller.setPriority(originalPriority);
+            if (verbose) {
+                System.out.println(label + " priority restored to " + originalPriority);
+            }
+        }
+
         return waited;
     }
 }
