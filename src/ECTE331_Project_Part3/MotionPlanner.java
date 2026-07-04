@@ -1,11 +1,10 @@
 package ECTE331_Project_Part3;
 
 /**
- * MotionPlannerThread (MEDIUM priority) - Task 3.
+ * MotionPlanner (MEDIUM priority) - Task 4.
  * Continuous CPU-bound work, never touches the motor.
- * NO sleep() in the loop - this is what makes it genuinely compete
- * for CPU time against Logger, which is required to actually
- * demonstrate priority inversion.
+ * NO sleep() in the loop - genuinely competes for CPU against Log,
+ * so priority inheritance has something real to fix.
  */
 public class MotionPlanner extends Thread {
 
@@ -27,7 +26,7 @@ public class MotionPlanner extends Thread {
         while (keepRunning) {
             dummy += 1; // continuous CPU-bound work, no sleep
             long now = System.currentTimeMillis();
-            if (now - lastPrint >= 200) { // print occasionally without giving up CPU via sleep
+            if (now - lastPrint >= 200) {
                 System.out.println(getName() + " (MEDIUM) running...");
                 lastPrint = now;
             }
